@@ -117,6 +117,7 @@ export interface ApprovalAction {
   userId: string
   action: 'approve' | 'reject' | 'transfer' | 'submit'
   comment: string
+  transferToUserId?: string
   createdAt: string
 }
 

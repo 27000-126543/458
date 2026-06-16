@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TrendingUp,
   TrendingDown,
@@ -53,21 +54,6 @@ interface TrendItem {
   count: number;
 }
 
-const departments = [
-  { id: "", name: "全部部门" },
-  { id: "dept_tech", name: "技术研发部" },
-  { id: "dept_marketing", name: "市场营销部" },
-  { id: "dept_product", name: "产品设计部" },
-  { id: "dept_ops", name: "运营管理部" },
-  { id: "dept_hr", name: "人力资源部" },
-];
-
-const periods = [
-  { value: "monthly", label: "月度" },
-  { value: "quarterly", label: "季度" },
-  { value: "yearly", label: "年度" },
-];
-
 function MetricCard({
   label,
   value,
@@ -103,11 +89,27 @@ function MetricCard({
 }
 
 export default function Performance() {
+  const { t } = useTranslation();
   const [report, setReport] = useState<ReportItem[]>([]);
   const [trend, setTrend] = useState<TrendItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deptId, setDeptId] = useState("");
   const [period, setPeriod] = useState("quarterly");
+
+  const departments = [
+    { id: "", name: t("performance.allDepartments") },
+    { id: "dept_tech", name: "技术研发部" },
+    { id: "dept_marketing", name: "市场营销部" },
+    { id: "dept_product", name: "产品设计部" },
+    { id: "dept_ops", name: "运营管理部" },
+    { id: "dept_hr", name: "人力资源部" },
+  ];
+
+  const periods = [
+    { value: "monthly", label: t("performance.monthly") },
+    { value: "quarterly", label: t("performance.quarterly") },
+    { value: "yearly", label: t("performance.yearly") },
+  ];
 
   useEffect(() => {
     Promise.all([
@@ -170,8 +172,8 @@ export default function Performance() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-slate-100">绩效分析</h1>
-          <p className="text-sm text-slate-500 mt-1">团队绩效数据总览与趋势分析</p>
+          <h1 className="text-2xl font-heading font-bold text-slate-100">{t("performance.title")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t("performance.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -204,21 +206,21 @@ export default function Performance() {
 
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
-          label="平均绩效分"
+          label={t("performance.avgScore")}
           value={avgScore}
           trend={trendDelta}
           icon={Target}
           color="text-cyan-400 bg-cyan-400/10"
         />
         <MetricCard
-          label="最高绩效分"
+          label={t("performance.highestScore")}
           value={maxScore}
           icon={Trophy}
           color="text-emerald-400 bg-emerald-400/10"
         />
         <MetricCard
-          label="绩效趋势"
-          value={trendDelta >= 0 ? "上升" : "下降"}
+          label={t("performance.trend")}
+          value={trendDelta >= 0 ? t("performance.rising") : t("performance.falling")}
           trend={trendDelta}
           icon={TrendingUp}
           color="text-amber-400 bg-amber-400/10"
@@ -227,7 +229,7 @@ export default function Performance() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-slate-300 mb-4">部门绩效对比</h3>
+          <h3 className="text-sm font-medium text-slate-300 mb-4">{t("performance.departmentCompare")}</h3>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={deptChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -247,7 +249,7 @@ export default function Performance() {
         </div>
 
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-slate-300 mb-4">绩效趋势与预测</h3>
+          <h3 className="text-sm font-medium text-slate-300 mb-4">{t("performance.trendPrediction")}</h3>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={trendWithPrediction}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -301,19 +303,19 @@ export default function Performance() {
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-slate-300 mb-4 flex items-center gap-2">
           <Users className="w-4 h-4 text-amber-400" />
-          绩效排行榜 Top 10
+          {t("performance.topRanking")}
         </h3>
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">排名</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">姓名</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">部门</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">综合分</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">完成率</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">按时率</th>
-                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">质量分</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.rank")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.name")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.department")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.totalScore")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.completionRate")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.onTimeRate")}</th>
+                <th className="text-left text-xs font-medium text-slate-500 py-3 px-3">{t("performance.qualityScoreLabel")}</th>
               </tr>
             </thead>
             <tbody>

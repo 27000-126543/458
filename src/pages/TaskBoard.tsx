@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   DragOverlay,
@@ -6,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
@@ -18,14 +20,31 @@ import TaskCard from "@/components/TaskCard";
 import RecommendationPanel from "@/components/RecommendationPanel";
 import { cn } from "@/lib/utils";
 
-const columns = [
-  { id: "pending", title: "待分配", color: "bg-slate-500", accent: "border-slate-500" },
-  { id: "in_progress", title: "进行中", color: "bg-cyan-400", accent: "border-cyan-400" },
-  { id: "review", title: "待审核", color: "bg-amber", accent: "border-amber" },
-  { id: "completed", title: "已完成", color: "bg-emerald", accent: "border-emerald" },
-] as const;
+type ColumnId = "pending" | "in_progress" | "review" | "completed";
 
-type ColumnId = (typeof columns)[number]["id"];
+function DroppableColumn({
+  colId,
+  children,
+  className,
+}: {
+  colId: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col-${colId}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex-1 p-3 space-y-3 overflow-y-auto scrollbar-thin transition-all duration-200",
+        isOver && "bg-emerald-500/10",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface TaskItem {
   id: string;
@@ -41,6 +60,7 @@ interface TaskItem {
 }
 
 export default function TaskBoard() {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -48,6 +68,13 @@ export default function TaskBoard() {
   const [sourceFilter, setSourceFilter] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [recommendTaskId, setRecommendTaskId] = useState<string | null>(null);
+
+  const columns = [
+    { id: "pending" as const, title: t("task.status.pending"), color: "bg-slate-500", accent: "border-slate-500" },
+    { id: "in_progress" as const, title: t("task.status.inProgress"), color: "bg-cyan-400", accent: "border-cyan-400" },
+    { id: "review" as const, title: t("task.status.review"), color: "bg-amber", accent: "border-amber" },
+    { id: "completed" as const, title: t("task.status.completed"), color: "bg-emerald", accent: "border-emerald" },
+  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -88,27 +115,36 @@ export default function TaskBoard() {
     if (!task) return;
 
     let targetColumn: string | null = null;
-    for (const col of columns) {
-      const colId = col.id === "review" ? "blocked" : col.id;
-      if (getColumnTasks(col.id as ColumnId).some((t) => t.id === over.id)) {
-        targetColumn = colId;
-        break;
+    const overId = String(over.id);
+
+    if (overId.startsWith("col-")) {
+      const colKey = overId.replace("col-", "");
+      targetColumn = colKey === "review" ? "blocked" : colKey;
+    } else {
+      for (const col of columns) {
+        const colId = col.id === "review" ? "blocked" : col.id;
+        if (getColumnTasks(col.id as ColumnId).some((t) => t.id === overId)) {
+          targetColumn = colId;
+          break;
+        }
       }
     }
 
     if (targetColumn && targetColumn !== task.status) {
+      const originalStatus = task.status;
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: targetColumn! } : t))
       );
       try {
-        await fetch(`/api/tasks/${taskId}/status`, {
+        const res = await fetch(`/api/tasks/${taskId}/status`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: targetColumn }),
         });
+        if (!res.ok) throw new Error("failed");
       } catch {
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, status: task.status } : t))
+          prev.map((t) => (t.id === taskId ? { ...t, status: originalStatus } : t))
         );
       }
     }
@@ -122,7 +158,7 @@ export default function TaskBoard() {
         <div className="flex items-center gap-3">
           <LayoutGrid className="w-5 h-5 text-emerald" />
           <h1 className="text-xl font-heading font-semibold text-slate-100">
-            任务看板
+            {t("task.board")}
           </h1>
         </div>
 
@@ -132,7 +168,7 @@ export default function TaskBoard() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索任务..."
+              placeholder={t("task.searchPlaceholder")}
               className="input-dark pl-10 w-56 text-sm"
             />
           </div>
@@ -144,28 +180,28 @@ export default function TaskBoard() {
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="input-dark w-24 text-sm py-1.5"
             >
-              <option value="">优先级</option>
-              <option value="urgent">紧急</option>
-              <option value="high">高</option>
-              <option value="medium">中</option>
-              <option value="low">低</option>
+              <option value="">{t("task.priority")}</option>
+              <option value="urgent">{t("task.priorityLabel.urgent")}</option>
+              <option value="high">{t("task.priorityLabel.high")}</option>
+              <option value="medium">{t("task.priorityLabel.medium")}</option>
+              <option value="low">{t("task.priorityLabel.low")}</option>
             </select>
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
               className="input-dark w-24 text-sm py-1.5"
             >
-              <option value="">来源</option>
-              <option value="manual">手动</option>
-              <option value="system">系统</option>
-              <option value="approval">审批</option>
-              <option value="import">导入</option>
+              <option value="">{t("task.source")}</option>
+              <option value="manual">{t("task.sourceLabel.manual")}</option>
+              <option value="system">{t("task.sourceLabel.system")}</option>
+              <option value="approval">{t("task.sourceLabel.approval")}</option>
+              <option value="import">{t("task.sourceLabel.import")}</option>
             </select>
           </div>
 
           <button className="btn-primary flex items-center gap-1.5 text-sm">
             <Plus className="w-4 h-4" />
-            创建任务
+            {t("task.createTask")}
           </button>
         </div>
       </div>
@@ -203,7 +239,7 @@ export default function TaskBoard() {
                   items={colTasks.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="flex-1 p-3 space-y-3 overflow-y-auto scrollbar-thin">
+                  <DroppableColumn colId={col.id}>
                     {colTasks.map((task) => (
                       <TaskCard
                         key={task.id}
@@ -213,10 +249,10 @@ export default function TaskBoard() {
                     ))}
                     {colTasks.length === 0 && (
                       <div className="text-center py-8 text-xs text-slate-600">
-                        暂无任务
+                        {t("task.noTasks")}
                       </div>
                     )}
-                  </div>
+                  </DroppableColumn>
                 </SortableContext>
               </div>
             );

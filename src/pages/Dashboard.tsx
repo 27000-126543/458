@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   CheckCircle,
@@ -199,6 +200,7 @@ function KpiCard({
 }
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
   const [heatmap, setHeatmap] = useState<HeatmapDay[]>([]);
   const [capacity, setCapacity] = useState<CapacityCard[]>([]);
   const [kpi, setKpi] = useState<KPIMetrics | null>(null);
@@ -225,7 +227,7 @@ export default function Dashboard() {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -296,16 +298,16 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-heading text-slate-100">
-            全局仪表盘
+            {t("dashboard.title")}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            实时监控全公司任务与资源状态
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="glass-card px-4 py-2.5 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-emerald animate-pulse-glow" />
-            <span className="text-sm font-medium text-emerald">实时</span>
+            <span className="text-sm font-medium text-emerald">{t("dashboard.realtime")}</span>
             <span className="text-sm text-slate-400 font-mono">
               {formatTime(currentTime)}
             </span>
@@ -321,16 +323,16 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           icon={Target}
-          label="任务完成率"
+          label={t("dashboard.taskCompletionRate")}
           value={kpi?.completionRate || 0}
-          subValue={`${kpi?.completedTasks || 0} / ${kpi?.totalTasks || 0} 个任务`}
+          subValue={`${kpi?.completedTasks || 0} ${t("dashboard.ofTotalTasks")}`}
           trend={{ value: "12%", up: true }}
           color="emerald"
           delay={0}
         />
         <KpiCard
           icon={BarChart3}
-          label="平均响应时间"
+          label={t("dashboard.avgResponseTime")}
           value="2.4h"
           subValue="较上周缩短 0.6h"
           trend={{ value: "8%", up: true }}
@@ -339,17 +341,17 @@ export default function Dashboard() {
         />
         <KpiCard
           icon={CheckCircle}
-          label="审批通过率"
+          label={t("dashboard.approvalPassRate")}
           value={kpi?.onTimeRate || 0}
-          subValue={`${kpi?.pendingApprovals || 0} 项待审批`}
+          subValue={`${kpi?.pendingApprovals || 0} ${t("dashboard.pendingApprovals")}`}
           color="amber"
           delay={200}
         />
         <KpiCard
           icon={Users}
-          label="活跃任务数"
+          label={t("dashboard.activeTasks")}
           value={kpi?.inProgressTasks || 0}
-          subValue={`${kpi?.activeProjects || 0} 个进行中项目`}
+          subValue={`${kpi?.activeProjects || 0} ${t("dashboard.activeProjects")}`}
           trend={{ value: "5%", up: true }}
           color="blue"
           delay={300}
@@ -361,14 +363,14 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-lg font-semibold font-heading text-slate-100">
-                资源热力图
+                {t("dashboard.resourceHeatmap")}
               </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                近30天任务分布与工作强度
+                {t("dashboard.heatmapSubtitle")}
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>低</span>
+              <span>{t("dashboard.low")}</span>
               <div className="flex gap-0.5">
                 {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
                   <div
@@ -377,7 +379,7 @@ export default function Dashboard() {
                   />
                 ))}
               </div>
-              <span>高</span>
+              <span>{t("dashboard.high")}</span>
             </div>
           </div>
 

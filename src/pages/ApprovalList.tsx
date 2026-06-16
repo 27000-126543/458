@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   CheckSquare,
@@ -33,15 +34,8 @@ interface ApprovalItem {
 
 type TabKey = "pending" | "initiated" | "completed";
 
-const statusMap: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  pending: { label: "待审批", color: "text-amber-400 bg-amber-400/10 border-amber-400/20", icon: Clock },
-  approved: { label: "已通过", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
-  rejected: { label: "已驳回", color: "text-red-400 bg-red-400/10 border-red-400/20", icon: XCircle },
-  transferred: { label: "已转审", color: "text-blue-400 bg-blue-400/10 border-blue-400/20", icon: RotateCcw },
-  cancelled: { label: "已取消", color: "text-slate-400 bg-slate-400/10 border-slate-400/20", icon: AlertCircle },
-};
-
 export default function ApprovalList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useAppStore((s) => s.currentUser);
   const [activeTab, setActiveTab] = useState<TabKey>("pending");
@@ -49,6 +43,20 @@ export default function ApprovalList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+
+  const statusMap: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
+    pending: { label: t("approval.pending"), color: "text-amber-400 bg-amber-400/10 border-amber-400/20", icon: Clock },
+    approved: { label: t("approval.approved"), color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
+    rejected: { label: t("approval.rejected"), color: "text-red-400 bg-red-400/10 border-red-400/20", icon: XCircle },
+    transferred: { label: t("approval.transferred"), color: "text-blue-400 bg-blue-400/10 border-blue-400/20", icon: RotateCcw },
+    cancelled: { label: t("approval.cancelled"), color: "text-slate-400 bg-slate-400/10 border-slate-400/20", icon: AlertCircle },
+  };
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "pending", label: t("approval.myPending") },
+    { key: "initiated", label: t("approval.myInitiated") },
+    { key: "completed", label: t("approval.completed") },
+  ];
 
   useEffect(() => {
     fetchApprovals();
@@ -77,12 +85,6 @@ export default function ApprovalList() {
     return true;
   });
 
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: "pending", label: "待我审批" },
-    { key: "initiated", label: "我发起的" },
-    { key: "completed", label: "已完成" },
-  ];
-
   const formatTime = (iso: string) => {
     const d = new Date(iso);
     return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -92,15 +94,15 @@ export default function ApprovalList() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-slate-100">审批中心</h1>
-          <p className="text-sm text-slate-500 mt-1">管理审批流程，跟踪审批状态</p>
+          <h1 className="text-2xl font-heading font-bold text-slate-100">{t("approval.list")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t("approval.subtitle")}</p>
         </div>
         <button
           onClick={() => navigate("/approvals/designer")}
           className="btn-primary flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          新建审批
+          {t("approval.newApproval")}
         </button>
       </div>
 
@@ -126,7 +128,7 @@ export default function ApprovalList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
-            placeholder="搜索审批标题..."
+            placeholder={t("common.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input-dark pl-10"
@@ -140,11 +142,11 @@ export default function ApprovalList() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="input-dark pl-10 pr-8 appearance-none min-w-[140px]"
           >
-            <option value="">全部状态</option>
-            <option value="pending">待审批</option>
-            <option value="approved">已通过</option>
-            <option value="rejected">已驳回</option>
-            <option value="transferred">已转审</option>
+            <option value="">{t("common.all")}</option>
+            <option value="pending">{t("approval.pending")}</option>
+            <option value="approved">{t("approval.approved")}</option>
+            <option value="rejected">{t("approval.rejected")}</option>
+            <option value="transferred">{t("approval.transferred")}</option>
           </select>
         </div>
       </div>
@@ -156,7 +158,7 @@ export default function ApprovalList() {
       ) : filtered.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <CheckSquare className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-500">暂无审批数据</p>
+          <p className="text-slate-500">{t("approval.noRecords")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -193,11 +195,11 @@ export default function ApprovalList() {
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <User className="w-3.5 h-3.5" />
-                        {item.initiator?.name || "未知"}
+                        {item.initiator?.name || t("common.unknownUser")}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckSquare className="w-3.5 h-3.5" />
-                        当前节点: {currentNode?.name || "-"}
+                        {t("approval.currentNode")}: {currentNode?.name || "-"}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />

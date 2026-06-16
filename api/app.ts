@@ -13,6 +13,7 @@ import approvalRoutes, { flowRouter } from './routes/approvals.js'
 import dashboardRoutes from './routes/dashboard.js'
 import performanceRoutes from './routes/performance.js'
 import collaborationRoutes from './routes/collaboration.js'
+import { users, departments, roles } from './db/mockData.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -34,6 +35,20 @@ app.use('/api/performance', performanceRoutes)
 app.use('/api', collaborationRoutes)
 
 app.get('/api/recommendations', handleRecommendations)
+
+app.get('/api/users', (req: Request, res: Response): void => {
+  const { departmentId } = req.query
+  let result = [...users]
+  if (departmentId) {
+    result = result.filter(u => u.departmentId === departmentId)
+  }
+  const enriched = result.map(u => ({
+    ...u,
+    department: departments.find(d => d.id === u.departmentId) || null,
+    role: roles.find(r => r.id === u.roleId) || null,
+  }))
+  res.json({ success: true, data: enriched })
+})
 
 app.use(
   '/api/health',

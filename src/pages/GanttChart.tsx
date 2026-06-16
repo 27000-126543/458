@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ZoomIn, ZoomOut, GanttChartSquare, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ interface TaskItem {
 }
 
 export default function GanttChartPage() {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dayWidth, setDayWidth] = useState(30);
@@ -155,21 +157,21 @@ export default function GanttChartPage() {
         <div className="flex items-center gap-3">
           <GanttChartSquare className="w-5 h-5 text-emerald" />
           <h1 className="text-xl font-heading font-semibold text-slate-100">
-            甘特图
+            {t("task.ganttTitle")}
           </h1>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleZoom(8)}
             className="btn-secondary p-2"
-            title="放大"
+            title={t("task.zoomIn")}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleZoom(-8)}
             className="btn-secondary p-2"
-            title="缩小"
+            title={t("task.zoomOut")}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
@@ -178,7 +180,7 @@ export default function GanttChartPage() {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
-          加载中...
+          {t("common.loading")}
         </div>
       ) : (
         <div

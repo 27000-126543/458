@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -37,20 +38,21 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string }> = {
   deadline_approaching: { icon: AlertCircle, color: "text-red-400 bg-red-400/10" },
 };
 
-const tabList: { key: TabKey; label: string; types: string[] }[] = [
-  { key: "all", label: "全部", types: [] },
-  { key: "task", label: "任务变更", types: ["task_assigned", "task_updated", "deadline_approaching"] },
-  { key: "approval", label: "审批待办", types: ["approval_required", "approval_result"] },
-  { key: "mention", label: "@提及", types: ["mention", "comment_added"] },
-];
-
 export default function Messages() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const markNotificationRead = useAppStore((s) => s.markNotificationRead);
   const addNotification = useAppStore((s) => s.addNotification);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [loading, setLoading] = useState(true);
+
+  const tabList: { key: TabKey; label: string; types: string[] }[] = [
+    { key: "all", label: t("message.all"), types: [] },
+    { key: "task", label: t("message.task"), types: ["task_assigned", "task_updated", "deadline_approaching"] },
+    { key: "approval", label: t("message.approval"), types: ["approval_required", "approval_result"] },
+    { key: "mention", label: t("message.mention"), types: ["mention", "comment_added"] },
+  ];
 
   useEffect(() => {
     fetch("/api/notifications")
@@ -106,7 +108,7 @@ export default function Messages() {
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-slate-100">消息中心</h1>
+          <h1 className="text-2xl font-heading font-bold text-slate-100">{t("message.title")}</h1>
           <p className="text-sm text-slate-500 mt-1">
             {unreadCount > 0 ? `${unreadCount} 条未读消息` : "没有未读消息"}
           </p>
@@ -116,7 +118,7 @@ export default function Messages() {
           className="btn-secondary flex items-center gap-2 text-sm"
         >
           <CheckCheck className="w-4 h-4" />
-          全部标为已读
+          {t("message.markAllRead")}
         </button>
       </div>
 
@@ -144,7 +146,7 @@ export default function Messages() {
       ) : filtered.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <Bell className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-500">暂无消息</p>
+          <p className="text-slate-500">{t("message.noMessages")}</p>
         </div>
       ) : (
         <div className="space-y-2">

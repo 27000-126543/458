@@ -36,6 +36,7 @@ router.get('/', (req: Request, res: Response): void => {
     actions: approvalActions.filter(a => a.instanceId === inst.id).map(action => ({
       ...action,
       user: users.find(u => u.id === action.userId) || null,
+      transferToUser: action.transferToUserId ? users.find(u => u.id === action.transferToUserId) || null : null,
     })),
   }))
 
@@ -61,6 +62,7 @@ router.get('/:id', (req: Request, res: Response): void => {
     actions: approvalActions.filter(a => a.instanceId === inst.id).map(action => ({
       ...action,
       user: users.find(u => u.id === action.userId) || null,
+      transferToUser: action.transferToUserId ? users.find(u => u.id === action.transferToUserId) || null : null,
     })),
   }
 
@@ -138,6 +140,18 @@ router.put('/:id/action', (req: Request, res: Response): void => {
 
   const now = new Date().toISOString()
 
+  if (action === 'transfer') {
+    if (!transferToUserId) {
+      res.status(400).json({ success: false, error: '转审需要指定transferToUserId' })
+      return
+    }
+    const transferToUser = users.find(u => u.id === transferToUserId)
+    if (!transferToUser) {
+      res.status(400).json({ success: false, error: '转审接收人不存在' })
+      return
+    }
+  }
+
   approvalActions.push({
     id: generateId(),
     instanceId: inst.id,
@@ -145,6 +159,7 @@ router.put('/:id/action', (req: Request, res: Response): void => {
     userId,
     action,
     comment: comment || '',
+    transferToUserId: action === 'transfer' ? transferToUserId : undefined,
     createdAt: now,
   })
 
@@ -165,14 +180,26 @@ router.put('/:id/action', (req: Request, res: Response): void => {
   } else if (action === 'reject') {
     inst.status = 'rejected'
   } else if (action === 'transfer') {
-    if (!transferToUserId) {
-      res.status(400).json({ success: false, error: '转审需要指定transferToUserId' })
-      return
-    }
+    inst.status = 'pending'
   }
 
   inst.updatedAt = now
-  res.json({ success: true, data: inst })
+
+  const currentNode = flow?.nodes.find(n => n.id === inst.currentNodeId)
+  const enriched = {
+    ...inst,
+    initiator: users.find(u => u.id === inst.initiatorId) || null,
+    flow: flow || null,
+    currentNode: currentNode || null,
+    task: inst.taskId ? tasks.find(t => t.id === inst.taskId) || null : null,
+    actions: approvalActions.filter(a => a.instanceId === inst.id).map(action => ({
+      ...action,
+      user: users.find(u => u.id === action.userId) || null,
+      transferToUser: action.transferToUserId ? users.find(u => u.id === action.transferToUserId) || null : null,
+    })),
+  }
+
+  res.json({ success: true, data: enriched })
 })
 
 flowRouter.get('/', (_req: Request, res: Response): void => {

@@ -15,7 +15,7 @@ const router = Router()
 router.get('/', (req: Request, res: Response): void => {
   let result = [...tasks]
 
-  const { status, assigneeId, projectId, priority, departmentId, search } = req.query
+  const { status, assigneeId, projectId, priority, departmentId, source, search } = req.query
 
   if (status) {
     result = result.filter(t => t.status === status)
@@ -31,6 +31,9 @@ router.get('/', (req: Request, res: Response): void => {
   }
   if (departmentId) {
     result = result.filter(t => t.departmentId === departmentId)
+  }
+  if (source) {
+    result = result.filter(t => t.source === source)
   }
   if (search) {
     const s = String(search).toLowerCase()
